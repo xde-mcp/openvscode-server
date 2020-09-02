@@ -67,6 +67,8 @@ import { IExtensionsProfileScannerService } from '../../platform/extensionManage
 import { IUserDataProfilesService } from '../../platform/userDataProfile/common/userDataProfile.js';
 import { NullPolicyService } from '../../platform/policy/common/policy.js';
 import { OneDataSystemAppender } from '../../platform/telemetry/node/1dsAppender.js';
+// eslint-disable-next-line local/code-import-patterns
+import { GitpodInsightsAppender } from '../../gitpod/node/gitpodInsightsAppender.js';
 import { LoggerService } from '../../platform/log/node/loggerService.js';
 import { ServerUserDataProfilesService } from '../../platform/userDataProfile/node/userDataProfile.js';
 import { ExtensionsProfileScannerService } from '../../platform/extensionManagement/node/extensionsProfileScannerService.js';
@@ -78,6 +80,7 @@ import { RemoteExtensionsScannerChannelName } from '../../platform/remote/common
 import { RemoteUserDataProfilesServiceChannel } from '../../platform/userDataProfile/common/userDataProfileIpc.js';
 import { NodePtyHostStarter } from '../../platform/terminal/node/nodePtyHostStarter.js';
 import { CSSDevelopmentService, ICSSDevelopmentService } from '../../platform/cssDev/node/cssDevService.js';
+import { DownloadService } from '../../platform/download/common/downloadService.js';
 
 const eventPrefix = 'monacoworkbench';
 
@@ -154,7 +157,8 @@ export async function setupServerServices(connectionToken: ServerConnectionToken
 	let oneDsAppender: ITelemetryAppender = NullAppender;
 	const isInternal = isInternalTelemetry(productService, configurationService);
 	if (supportsTelemetry(productService, environmentService)) {
-		if (!isLoggingOnly(productService, environmentService) && productService.aiConfig?.ariaKey) {
+		oneDsAppender = new GitpodInsightsAppender(productService.nameShort, productService.version, productService.gitpodPreview, productService.extensionsGallery?.serviceUrl);
+		if (!isLoggingOnly(productService, environmentService) && productService.aiConfig?.ariaKey && !oneDsAppender) {
 			oneDsAppender = new OneDataSystemAppender(requestService, isInternal, eventPrefix, null, productService.aiConfig.ariaKey);
 			disposables.add(toDisposable(() => oneDsAppender?.flush())); // Ensure the AI appender is disposed so that it flushes remaining data
 		}
@@ -218,7 +222,8 @@ export async function setupServerServices(connectionToken: ServerConnectionToken
 
 		socketServer.registerChannel(REMOTE_TERMINAL_CHANNEL_NAME, new RemoteTerminalChannel(environmentService, logService, ptyHostService, productService, extensionManagementService, configurationService));
 
-		const remoteExtensionsScanner = new RemoteExtensionsScannerService(instantiationService.createInstance(ExtensionManagementCLI, logService), environmentService, userDataProfilesService, extensionsScannerService, logService, extensionGalleryService, languagePackService);
+		const nativeDownloadService = new DownloadService(accessor.get(IRequestService), accessor.get(IFileService));
+		const remoteExtensionsScanner = new RemoteExtensionsScannerService(instantiationService.createInstance(ExtensionManagementCLI, logService), environmentService, userDataProfilesService, extensionsScannerService, logService, extensionGalleryService, languagePackService, nativeDownloadService);
 		socketServer.registerChannel(RemoteExtensionsScannerChannelName, new RemoteExtensionsScannerChannel(remoteExtensionsScanner, (ctx: RemoteAgentConnectionContext) => getUriTransformer(ctx.remoteAuthority)));
 
 		const remoteFileSystemChannel = disposables.add(new RemoteAgentFileSystemProviderChannel(logService, environmentService, configurationService));
