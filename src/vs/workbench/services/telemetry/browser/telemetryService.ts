@@ -18,6 +18,11 @@ import { getTelemetryLevel, isInternalTelemetry, isLoggingOnly, ITelemetryAppend
 import { IBrowserWorkbenchEnvironmentService } from 'vs/workbench/services/environment/browser/environmentService';
 import { IRemoteAgentService } from 'vs/workbench/services/remote/common/remoteAgentService';
 import { resolveWorkbenchCommonProperties } from 'vs/workbench/services/telemetry/browser/workbenchCommonProperties';
+// eslint-disable-next-line local/code-import-patterns
+import { GitpodInsightsAppender } from 'vs/gitpod/browser/gitpodInsightsAppender';
+import { ErrorEvent } from 'vs/platform/telemetry/common/errorTelemetry';
+// eslint-disable-next-line local/code-import-patterns
+import { GitpodErrorEvent } from 'vs/gitpod/common/insightsHelper';
 
 export class TelemetryService extends Disposable implements ITelemetryService {
 
@@ -73,11 +78,8 @@ export class TelemetryService extends Disposable implements ITelemetryService {
 			const isInternal = isInternalTelemetry(productService, configurationService);
 			if (!isLoggingOnly(productService, environmentService)) {
 				if (remoteAgentService.getConnection() !== null) {
-					const remoteTelemetryProvider = {
-						log: remoteAgentService.logTelemetry.bind(remoteAgentService),
-						flush: remoteAgentService.flushTelemetry.bind(remoteAgentService)
-					};
-					appenders.push(remoteTelemetryProvider);
+					const telemetryProvider: ITelemetryAppender = remoteAgentService.getConnection() !== null ? { log: remoteAgentService.logTelemetry.bind(remoteAgentService), flush: remoteAgentService.flushTelemetry.bind(remoteAgentService) } : (new GitpodInsightsAppender(productService) || new OneDataSystemWebAppender(isInternal, 'monacoworkbench', null, productService.aiConfig?.ariaKey));
+					appenders.push(telemetryProvider);
 				} else {
 					appenders.push(new OneDataSystemWebAppender(isInternal, 'monacoworkbench', null, productService.aiConfig?.ariaKey));
 				}
@@ -111,6 +113,13 @@ export class TelemetryService extends Disposable implements ITelemetryService {
 	}
 
 	publicLogError(errorEventName: string, data?: ITelemetryData) {
+		if (errorEventName === 'UnhandledError') {
+			const errData: GitpodErrorEvent = {
+				...(data as ErrorEvent),
+				fromBrowser: true,
+			};
+			this.impl.publicLog(errorEventName, errData);
+		}
 		this.impl.publicLog(errorEventName, data);
 	}
 
