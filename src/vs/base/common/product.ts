@@ -191,6 +191,18 @@ export interface IProductConfiguration {
 	readonly aiGeneratedWorkspaceTrust?: IAiGeneratedWorkspaceTrust;
 	readonly gitHubEntitlement?: IGitHubEntitlement;
 	readonly chatParticipantRegistry?: string;
+
+	readonly gitpodPreview?: IGitpodPreviewConfiguration;
+}
+
+export interface IGitpodPreviewConfiguration {
+	host: string;
+	log?: {
+		analytics?: boolean;
+		metrics?: boolean;
+		errorReports?: boolean;
+	};
+	readonly chatParticipantRegistry?: string;
 }
 
 export interface ITunnelApplicationConfig {
