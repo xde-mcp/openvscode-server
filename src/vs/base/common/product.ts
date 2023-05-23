@@ -193,6 +193,7 @@ export interface IProductConfiguration {
 	readonly chatParticipantRegistry?: string;
 
 	readonly emergencyAlertUrl?: string;
+	readonly segmentKey: string;
 	readonly gitpodPreview?: IGitpodPreviewConfiguration;
 }
 

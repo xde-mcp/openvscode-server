@@ -20,9 +20,6 @@ import { IRemoteAgentService } from '../../remote/common/remoteAgentService.js';
 import { resolveWorkbenchCommonProperties } from './workbenchCommonProperties.js';
 // eslint-disable-next-line local/code-import-patterns
 import { GitpodInsightsAppender } from '../../../../gitpod/browser/gitpodInsightsAppender.js';
-import { ErrorEvent } from '../../../../platform/telemetry/common/errorTelemetry.js';
-// eslint-disable-next-line local/code-import-patterns
-import { GitpodErrorEvent } from '../../../../gitpod/common/insightsHelper.js';
 
 export class TelemetryService extends Disposable implements ITelemetryService {
 
@@ -80,10 +77,13 @@ export class TelemetryService extends Disposable implements ITelemetryService {
 			const isInternal = isInternalTelemetry(productService, configurationService);
 			if (!isLoggingOnly(productService, environmentService)) {
 				if (remoteAgentService.getConnection() !== null) {
-					const telemetryProvider: ITelemetryAppender = remoteAgentService.getConnection() !== null ? { log: remoteAgentService.logTelemetry.bind(remoteAgentService), flush: remoteAgentService.flushTelemetry.bind(remoteAgentService) } : (new GitpodInsightsAppender(productService) || new OneDataSystemWebAppender(isInternal, 'monacoworkbench', null, productService.aiConfig?.ariaKey));
-					appenders.push(telemetryProvider);
+					const remoteTelemetryProvider = {
+						log: remoteAgentService.logTelemetry.bind(remoteAgentService),
+						flush: remoteAgentService.flushTelemetry.bind(remoteAgentService)
+					};
+					appenders.push(remoteTelemetryProvider);
 				} else {
-					appenders.push(new OneDataSystemWebAppender(isInternal, 'monacoworkbench', null, productService.aiConfig?.ariaKey));
+					appenders.push(new GitpodInsightsAppender(productService.segmentKey, productService.nameShort, productService.version, productService.gitpodPreview, productService.extensionsGallery?.serviceUrl)/* new OneDataSystemWebAppender(isInternal, 'monacoworkbench', null, productService.aiConfig?.ariaKey) */);
 				}
 			}
 			appenders.push(new TelemetryLogAppender(logService, loggerService, environmentService, productService));
@@ -115,13 +115,6 @@ export class TelemetryService extends Disposable implements ITelemetryService {
 	}
 
 	publicLogError(errorEventName: string, data?: ITelemetryData) {
-		if (errorEventName === 'UnhandledError') {
-			const errData: GitpodErrorEvent = {
-				...(data as ErrorEvent),
-				fromBrowser: true,
-			};
-			this.impl.publicLog(errorEventName, errData);
-		}
 		this.impl.publicLog(errorEventName, data);
 	}
 
