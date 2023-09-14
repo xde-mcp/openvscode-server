@@ -37,7 +37,7 @@
 		"reportIssueUrl": "https://github.com/gitpod-io/gitpod/issues/new",
 		"requestFeatureUrl": "https://github.com/gitpod-io/gitpod/issues"
 	},
-	"nodejsRepository": "https://nodejs.org",
+	"nodejsRepository": "https://unofficial-builds.nodejs.org",
 	"urlProtocol": "gitpod-code",
 	"embedderIdentifier": "Gitpod",
 	"enableTelemetry": true,

@@ -212,9 +212,9 @@ function nodejs(platform, arch) {
 				.pipe(rename('node.exe'));
 		case 'darwin':
 		case 'linux':
-			return (product.nodejsRepository !== 'https://nodejs.org' ?
+			return (product.nodejsRepository !== 'https://unofficial-builds.nodejs.org' ?
 				fetchGithub(product.nodejsRepository, { version: `${nodeVersion}-${internalNodeVersion}`, name: `node-v${nodeVersion}-${platform}-${arch}.tar.gz`, checksumSha256 }) :
-				fetchUrls(`/dist/v${nodeVersion}/node-v${nodeVersion}-${platform}-${arch}.tar.gz`, { base: 'https://nodejs.org', checksumSha256 })
+				fetchUrls(`/download/release/v${nodeVersion}/node-v${nodeVersion}-${platform}-${arch}-glibc-217.tar.gz`, { base: 'https://unofficial-builds.nodejs.org', checksumSha256 })
 			).pipe(flatmap(stream => stream.pipe(gunzip()).pipe(untar())))
 				.pipe(filter('**/node'))
 				.pipe(util.setExecutableBit('**'))
