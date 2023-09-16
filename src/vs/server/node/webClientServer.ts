@@ -30,6 +30,8 @@ import { CharCode } from '../../base/common/charCode.js';
 import { IExtensionManifest } from '../../platform/extensions/common/extensions.js';
 import { isESM } from '../../base/common/amd.js';
 import { ICSSDevelopmentService } from '../../platform/cssDev/node/cssDevService.js';
+// eslint-disable-next-line local/code-import-patterns
+import { baseHost } from '../../gitpod/platform/product/common/product.js';
 
 const textMimeType: { [ext: string]: string | undefined } = {
 	'.html': 'text/html',
@@ -399,7 +401,7 @@ export class WebClientServer {
 				`script-src 'self' 'unsafe-eval' ${WORKBENCH_NLS_BASE_URL ?? ''} blob: 'nonce-1nline-m4p' ${this._getScriptCspHashes(data).join(' ')} '${webWorkerExtensionHostIframeScriptSHA}' 'sha256-/r7rqQ+yrxt57sxLuQ6AMYcy/lUpvAIzHjIJt/OeLWU=' ${useTestResolver ? '' : `http://${remoteAuthority}`};` : // the sha is the same as in src/vs/workbench/services/extensions/worker/webWorkerExtensionHostIframe.esm.html
 				`script-src 'self' 'unsafe-eval' ${WORKBENCH_NLS_BASE_URL ?? ''} ${this._getScriptCspHashes(data).join(' ')} '${webWorkerExtensionHostIframeScriptSHA}' ${useTestResolver ? '' : `http://${remoteAuthority}`};`, // the sha is the same as in src/vs/workbench/services/extensions/worker/webWorkerExtensionHostIframe.html
 			'child-src \'self\';',
-			`frame-src 'self' https://*.vscode-cdn.net https://*.gitpod.io https://*.gitpod-dev.com https://*.gitpod-staging.com data:;`,
+			`frame-src 'self' https://*.vscode-cdn.net https://*.${baseHost} https://*.gitpod-dev.com https://*.gitpod-staging.com data:;`,
 			'worker-src \'self\' data: blob:;',
 			'style-src \'self\' \'unsafe-inline\';',
 			'connect-src \'self\' ws: wss: https:;',

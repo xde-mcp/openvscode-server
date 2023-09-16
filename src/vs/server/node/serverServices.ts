@@ -78,9 +78,11 @@ import { RemoteExtensionsScannerChannelName } from '../../platform/remote/common
 import { RemoteUserDataProfilesServiceChannel } from '../../platform/userDataProfile/common/userDataProfileIpc.js';
 import { NodePtyHostStarter } from '../../platform/terminal/node/nodePtyHostStarter.js';
 import { CSSDevelopmentService, ICSSDevelopmentService } from '../../platform/cssDev/node/cssDevService.js';
+import { DownloadService } from '../../platform/download/common/downloadService.js';
 // eslint-disable-next-line local/code-import-patterns
 import { GitpodInsightsAppender } from '../../gitpod/node/gitpodInsightsAppender.js';
-import { DownloadService } from '../../platform/download/common/downloadService.js';
+// eslint-disable-next-line local/code-import-patterns
+import { addCustomGitpodProductProperties } from '../../gitpod/platform/product/common/product.js';
 
 // const eventPrefix = 'monacoworkbench';
 
@@ -88,7 +90,7 @@ export async function setupServerServices(connectionToken: ServerConnectionToken
 	const services = new ServiceCollection();
 	const socketServer = new SocketServer<RemoteAgentConnectionContext>();
 
-	const productService: IProductService = { _serviceBrand: undefined, ...product };
+	const productService: IProductService = { _serviceBrand: undefined, ...addCustomGitpodProductProperties(product) };
 	services.set(IProductService, productService);
 
 	const environmentService = new ServerEnvironmentService(args, productService);
