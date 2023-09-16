@@ -706,7 +706,6 @@ async function doStart(): Promise<IDisposable> {
 
 	const gitpodHostURL = new URL(info.gitpodHost);
 	const gitpodDomain = gitpodHostURL.protocol + '//*.' + gitpodHostURL.host;
-	const syncStoreURL = info.gitpodHost + '/code-sync';
 
 	const credentialsProvider = new LocalStorageCredentialsProvider();
 	const secretStorageProvider = new LocalStorageSecretStorageProvider();
@@ -1112,34 +1111,9 @@ async function doStart(): Promise<IDisposable> {
 		urlCallbackProvider: new LocalStorageURLCallbackProvider('/vscode-extension-auth-callback'),
 		credentialsProvider,
 		secretStorageProvider,
+		additionalTrustedDomains: [gitpodDomain],
 		productConfiguration: {
-			linkProtectionTrustedDomains: [
-				...(product.linkProtectionTrustedDomains || []),
-				gitpodDomain
-			],
-			'configurationSync.store': {
-				url: syncStoreURL,
-				stableUrl: syncStoreURL,
-				insidersUrl: syncStoreURL,
-				canSwitch: false,
-				authenticationProviders: {
-					gitpod: {
-						scopes: ['function:accessCodeSyncStorage']
-					}
-				}
-			},
-			'editSessions.store': {
-				url: syncStoreURL,
-				canSwitch: false,
-				authenticationProviders: {
-					gitpod: {
-						scopes: ['function:accessCodeSyncStorage']
-					}
-				}
-			},
 			webEndpointUrlTemplate,
-			commit: product.commit,
-			quality: product.quality
 		},
 		settingsSyncOptions: {
 			enabled: true,
