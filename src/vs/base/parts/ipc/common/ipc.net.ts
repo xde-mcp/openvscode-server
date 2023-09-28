@@ -43,6 +43,7 @@ export const enum SocketDiagnosticsEventType {
 	WebSocketNodeSocketDrainEnd = 'webSocketNodeSocketDrainEnd',
 
 	ProtocolHeaderRead = 'protocolHeaderRead',
+	ProtocolInvalidHeaderRead = 'protocolInvalidHeaderRead',
 	ProtocolMessageRead = 'protocolMessageRead',
 	ProtocolHeaderWrite = 'protocolHeaderWrite',
 	ProtocolMessageWrite = 'protocolMessageWrite',
@@ -266,6 +267,10 @@ const enum ProtocolMessageType {
 	KeepAlive = 9
 }
 
+function isValidProtocolMessageType(messageType: number): messageType is ProtocolMessageType {
+	return messageType >= ProtocolMessageType.None && messageType <= ProtocolMessageType.KeepAlive;
+}
+
 function protocolMessageTypeToString(messageType: ProtocolMessageType) {
 	switch (messageType) {
 		case ProtocolMessageType.None: return 'None';
@@ -369,11 +374,24 @@ class ProtocolReader extends Disposable {
 
 				// save new state => next time will read the body
 				this._state.readHead = false;
-				this._state.readLen = buff.readUInt32BE(9);
-				this._state.messageType = buff.readUInt8(0);
-				this._state.id = buff.readUInt32BE(1);
-				this._state.ack = buff.readUInt32BE(5);
-
+				const messageSize = buff.readUInt32BE(9);
+				const messageType = buff.readUInt8(0);
+				const id = buff.readUInt32BE(1);
+				const ack = buff.readUInt32BE(5);
+				if (!isValidProtocolMessageType(messageType)) {
+					// see https://github.com/microsoft/vscode/issues/194284
+					// FF does not have well some network condition changes
+					// in this case let's terminate the connection
+					// to reconnect and fix the connectivity
+					console.error(`received invalid message type ${messageType}, terminating connection`);
+					this._socket.traceSocketEvent(SocketDiagnosticsEventType.ProtocolInvalidHeaderRead, { messageType, id, ack, messageSize });
+					this._socket.dispose();
+					return;
+				}
+				this._state.readLen = messageSize;
+				this._state.messageType = messageType;
+				this._state.id = id;
+				this._state.ack = ack;
 				this._socket.traceSocketEvent(SocketDiagnosticsEventType.ProtocolHeaderRead, { messageType: protocolMessageTypeToString(this._state.messageType), id: this._state.id, ack: this._state.ack, messageSize: this._state.readLen });
 
 			} else {
