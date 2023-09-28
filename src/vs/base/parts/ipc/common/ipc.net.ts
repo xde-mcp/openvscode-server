@@ -43,6 +43,7 @@ export const enum SocketDiagnosticsEventType {
 	WebSocketNodeSocketDrainEnd = 'webSocketNodeSocketDrainEnd',
 
 	ProtocolHeaderRead = 'protocolHeaderRead',
+	ProtocolInvalidHeaderRead = 'protocolInvalidHeaderRead',
 	ProtocolMessageRead = 'protocolMessageRead',
 	ProtocolHeaderWrite = 'protocolHeaderWrite',
 	ProtocolMessageWrite = 'protocolMessageWrite',
@@ -51,7 +52,7 @@ export const enum SocketDiagnosticsEventType {
 
 export namespace SocketDiagnostics {
 
-	export const enableDiagnostics = false;
+	export const enableDiagnostics = true;
 
 	export interface IRecord {
 		timestamp: number;
@@ -266,6 +267,10 @@ const enum ProtocolMessageType {
 	KeepAlive = 9
 }
 
+function isValidProtocolMessageType(messageType: number): messageType is ProtocolMessageType {
+	return messageType >= ProtocolMessageType.None && messageType <= ProtocolMessageType.KeepAlive;
+}
+
 function protocolMessageTypeToString(messageType: ProtocolMessageType) {
 	switch (messageType) {
 		case ProtocolMessageType.None: return 'None';
@@ -369,11 +374,23 @@ class ProtocolReader extends Disposable {
 
 				// save new state => next time will read the body
 				this._state.readHead = false;
-				this._state.readLen = buff.readUInt32BE(9);
-				this._state.messageType = buff.readUInt8(0);
-				this._state.id = buff.readUInt32BE(1);
-				this._state.ack = buff.readUInt32BE(5);
-
+				const messageSize = buff.readUInt32BE(9);
+				const messageType = buff.readUInt8(0);
+				const id = buff.readUInt32BE(1);
+				const ack = buff.readUInt32BE(5);
+				if (!isValidProtocolMessageType(messageType)) {
+					// see https://github.com/microsoft/vscode/issues/194284
+					// FF does not have well some network condition changes
+					// in this case let's terminate the connection
+					// to reconnect and fix the connectivity
+					this._socket.traceSocketEvent(SocketDiagnosticsEventType.ProtocolInvalidHeaderRead, { messageType, id, ack, messageSize });
+					this._socket.dispose();
+					return;
+				}
+				this._state.readLen = messageSize;
+				this._state.messageType = messageType;
+				this._state.id = id;
+				this._state.ack = ack;
 				this._socket.traceSocketEvent(SocketDiagnosticsEventType.ProtocolHeaderRead, { messageType: protocolMessageTypeToString(this._state.messageType), id: this._state.id, ack: this._state.ack, messageSize: this._state.readLen });
 
 			} else {
@@ -381,6 +398,7 @@ class ProtocolReader extends Disposable {
 				const messageType = this._state.messageType;
 				const id = this._state.id;
 				const ack = this._state.ack;
+				const readlen = this._state.readLen;
 
 				// save new state => next time will read the header
 				this._state.readHead = true;
@@ -389,7 +407,7 @@ class ProtocolReader extends Disposable {
 				this._state.id = 0;
 				this._state.ack = 0;
 
-				this._socket.traceSocketEvent(SocketDiagnosticsEventType.ProtocolMessageRead, buff);
+				this._socket.traceSocketEvent(SocketDiagnosticsEventType.ProtocolMessageRead, { messageType: protocolMessageTypeToString(this._state.messageType), id, ack, readlen });
 
 				this._onMessage.fire(new ProtocolMessage(messageType, id, ack, buff));
 
@@ -1181,38 +1199,44 @@ export class PersistentProtocol implements IMessagePassingProtocol {
 	}
 }
 
-// (() => {
-// 	if (!SocketDiagnostics.enableDiagnostics) {
-// 		return;
-// 	}
-// 	if (typeof require.__$__nodeRequire !== 'function') {
-// 		console.log(`Can only log socket diagnostics on native platforms.`);
-// 		return;
-// 	}
-// 	const type = (
-// 		process.argv.includes('--type=renderer')
-// 			? 'renderer'
-// 			: (process.argv.includes('--type=extensionHost')
-// 				? 'extensionHost'
-// 				: (process.argv.some(item => item.includes('server-main'))
-// 					? 'server'
-// 					: 'unknown'
-// 				)
-// 			)
-// 	);
-// 	setTimeout(() => {
-// 		SocketDiagnostics.records.forEach(r => {
-// 			if (r.buff) {
-// 				r.data = Buffer.from(r.buff.buffer).toString('base64');
-// 				r.buff = undefined;
-// 			}
-// 		});
-
-// 		const fs = <typeof import('fs')>require.__$__nodeRequire('fs');
-// 		const path = <typeof import('path')>require.__$__nodeRequire('path');
-// 		const logPath = path.join(process.cwd(),`${type}-${process.pid}`);
-
-// 		console.log(`dumping socket diagnostics at ${logPath}`);
-// 		fs.writeFileSync(logPath, JSON.stringify(SocketDiagnostics.records));
-// 	}, 20000);
-// })();
+(() => {
+	if (!SocketDiagnostics.enableDiagnostics) {
+		return;
+	}
+	let fs: typeof import('fs') | undefined;
+	let type: string;
+	let logPath: string | undefined;
+	if (typeof require.__$__nodeRequire === 'function') {
+		console.log(`Can only log socket diagnostics on native platforms.`);
+		type = (
+			process.argv.includes('--type=renderer')
+				? 'renderer'
+				: (process.argv.includes('--type=extensionHost')
+					? 'extensionHost'
+					: (process.argv.some(item => item.includes('server-main'))
+						? 'server'
+						: 'unknown'
+					)
+				)
+		);
+		fs = <typeof import('fs')>require.__$__nodeRequire('fs');
+		const path = <typeof import('path')>require.__$__nodeRequire('path');
+		logPath = path.join(process.cwd(), `${type}-${process.pid}`);
+	} else {
+		type = 'window';
+	}
+	if (logPath) {
+		console.log(`dumping socket diagnostics at ${logPath}`);
+	}
+	setInterval(() => {
+		const records = SocketDiagnostics.records.map(r => {
+			return `[${new Date(r.timestamp)}][${r.label}][${r.type}] - ${JSON.stringify(r.data, undefined, 2)} \n`;
+		});
+		SocketDiagnostics.records.length = 0;
+		if (logPath && fs) {
+			fs.appendFileSync(logPath, records.join(''));
+		} else {
+			records.forEach(r => console.debug(r.trimEnd()));
+		}
+	}, 5000);
+})();

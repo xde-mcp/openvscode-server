@@ -216,8 +216,8 @@ class RemoteExtensionHostAgentServer extends Disposable implements IServerAPI {
 		];
 
 		// See https://tools.ietf.org/html/rfc7692#page-12
-		let permessageDeflate = false;
-		if (!skipWebSocketFrames && !this._environmentService.args['disable-websocket-compression'] && req.headers['sec-websocket-extensions']) {
+		const permessageDeflate = false;
+		/*if (!skipWebSocketFrames && !this._environmentService.args['disable-websocket-compression'] && req.headers['sec-websocket-extensions']) {
 			const websocketExtensionOptions = Array.isArray(req.headers['sec-websocket-extensions']) ? req.headers['sec-websocket-extensions'] : [req.headers['sec-websocket-extensions']];
 			for (const websocketExtensionOption of websocketExtensionOptions) {
 				if (/\b((server_max_window_bits)|(server_no_context_takeover)|(client_no_context_takeover))\b/.test(websocketExtensionOption)) {
@@ -235,7 +235,7 @@ class RemoteExtensionHostAgentServer extends Disposable implements IServerAPI {
 					break;
 				}
 			}
-		}
+		}*/
 
 		socket.write(responseHeaders.join('\r\n') + '\r\n\r\n');
 
