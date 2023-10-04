@@ -9,7 +9,7 @@ import { InstantiationType, registerSingleton } from 'vs/platform/instantiation/
 import { ILogService, ILoggerService } from 'vs/platform/log/common/log';
 import { IProductService } from 'vs/platform/product/common/productService';
 import { IStorageService } from 'vs/platform/storage/common/storage';
-import { OneDataSystemWebAppender } from 'vs/platform/telemetry/browser/1dsAppender';
+// import { OneDataSystemWebAppender } from 'vs/platform/telemetry/browser/1dsAppender';
 import { ClassifiedEvent, IGDPRProperty, OmitMetadata, StrictPropertyCheck } from 'vs/platform/telemetry/common/gdprTypings';
 import { ITelemetryData, ITelemetryService, TelemetryLevel, TELEMETRY_SETTING_ID } from 'vs/platform/telemetry/common/telemetry';
 import { TelemetryLogAppender } from 'vs/platform/telemetry/common/telemetryLogAppender';
