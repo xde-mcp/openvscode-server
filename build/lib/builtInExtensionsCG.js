@@ -8,6 +8,7 @@ const fs = require("fs");
 const path = require("path");
 const url = require("url");
 const ansiColors = require("ansi-colors");
+const node_fetch_commonjs_1 = require("node-fetch-commonjs");
 const root = path.dirname(path.dirname(__dirname));
 const rootCG = path.join(root, 'extensionsCG');
 const productjson = JSON.parse(fs.readFileSync(path.join(__dirname, '../../product.json'), 'utf8'));
@@ -22,7 +23,7 @@ async function downloadExtensionDetails(extension) {
     const repositoryContentBaseUrl = `https://${token ? `${token}@` : ''}${contentBasePath}/${repository}/v${extension.version}`;
     async function getContent(fileName) {
         try {
-            const response = await fetch(`${repositoryContentBaseUrl}/${fileName}`);
+            const response = await (0, node_fetch_commonjs_1.default)(`${repositoryContentBaseUrl}/${fileName}`);
             if (response.ok) {
                 return { fileName, body: Buffer.from(await response.arrayBuffer()) };
             }

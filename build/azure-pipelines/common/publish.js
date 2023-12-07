@@ -6,7 +6,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs = require("fs");
 const path = require("path");
-const stream_1 = require("stream");
+// import type { ReadableStream } from 'stream/web';
 const promises_1 = require("node:stream/promises");
 const yauzl = require("yauzl");
 const crypto = require("crypto");
@@ -18,6 +18,7 @@ const identity_1 = require("@azure/identity");
 const cp = require("child_process");
 const os = require("os");
 const node_worker_threads_1 = require("node:worker_threads");
+const node_fetch_commonjs_1 = require("node-fetch-commonjs");
 function e(name) {
     const result = process.env[name];
     if (typeof result !== 'string') {
@@ -79,7 +80,7 @@ class ProvisionService {
                 'Content-Type': 'application/json'
             }
         };
-        const res = await fetch(`https://dsprovisionapi.microsoft.com${url}`, opts);
+        const res = await (0, node_fetch_commonjs_1.default)(`https://dsprovisionapi.microsoft.com${url}`, opts);
         if (!res.ok || res.status < 200 || res.status >= 500) {
             throw new Error(`Unexpected status code: ${res.status}`);
         }
@@ -237,7 +238,7 @@ class ESRPClient {
 async function releaseAndProvision(log, releaseTenantId, releaseClientId, releaseAuthCertSubjectName, releaseRequestSigningCertSubjectName, provisionTenantId, provisionAADUsername, provisionAADPassword, version, quality, filePath) {
     const fileName = `${quality}/${version}/${path.basename(filePath)}`;
     const result = `${e('PRSS_CDN_URL')}/${fileName}`;
-    const res = await (0, retry_1.retry)(() => fetch(result));
+    const res = await (0, retry_1.retry)(() => (0, node_fetch_commonjs_1.default)(result));
     if (res.status === 200) {
         log(`Already released and provisioned: ${result}`);
         return result;
@@ -300,7 +301,7 @@ async function requestAZDOAPI(path) {
     const abortController = new AbortController();
     const timeout = setTimeout(() => abortController.abort(), 2 * 60 * 1000);
     try {
-        const res = await fetch(`${e('BUILDS_API_URL')}${path}?api-version=6.0`, { ...azdoFetchOptions, signal: abortController.signal });
+        const res = await (0, node_fetch_commonjs_1.default)(`${e('BUILDS_API_URL')}${path}?api-version=6.0`, { ...azdoFetchOptions, signal: abortController.signal });
         if (!res.ok) {
             throw new Error(`Unexpected status code: ${res.status}`);
         }
@@ -321,11 +322,11 @@ async function downloadArtifact(artifact, downloadPath) {
     const abortController = new AbortController();
     const timeout = setTimeout(() => abortController.abort(), 4 * 60 * 1000);
     try {
-        const res = await fetch(artifact.resource.downloadUrl, { ...azdoFetchOptions, signal: abortController.signal });
+        const res = await (0, node_fetch_commonjs_1.default)(artifact.resource.downloadUrl, { ...azdoFetchOptions, signal: abortController.signal });
         if (!res.ok) {
             throw new Error(`Unexpected status code: ${res.status}`);
         }
-        await (0, promises_1.pipeline)(stream_1.Readable.fromWeb(res.body), fs.createWriteStream(downloadPath));
+        await (0, promises_1.pipeline)(res.body, fs.createWriteStream(downloadPath));
     }
     finally {
         clearTimeout(timeout);

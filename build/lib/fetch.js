@@ -11,6 +11,7 @@ const log = require("fancy-log");
 const ansiColors = require("ansi-colors");
 const crypto = require("crypto");
 const through2 = require("through2");
+const node_fetch_commonjs_1 = require("node-fetch-commonjs");
 function fetchUrls(urls, options) {
     if (options === undefined) {
         options = {};
@@ -42,7 +43,7 @@ async function fetchUrl(url, options, retries = 10, retryDelay = 1000) {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 30 * 1000);
         try {
-            const response = await fetch(url, {
+            const response = await (0, node_fetch_commonjs_1.default)(url, {
                 ...options.nodeFetchOptions,
                 signal: controller.signal /* Typings issue with lib.dom.d.ts */
             });

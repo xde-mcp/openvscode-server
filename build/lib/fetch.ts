@@ -10,6 +10,7 @@ import * as ansiColors from 'ansi-colors';
 import * as crypto from 'crypto';
 import * as through2 from 'through2';
 import { Stream } from 'stream';
+import fetch, { RequestInit } from 'node-fetch-commonjs';
 
 export interface IFetchOptions {
 	base?: string;

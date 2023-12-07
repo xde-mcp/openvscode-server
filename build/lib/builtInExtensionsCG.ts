@@ -8,6 +8,7 @@ import * as path from 'path';
 import * as url from 'url';
 import ansiColors = require('ansi-colors');
 import { IExtensionDefinition } from './builtInExtensions';
+import fetch from 'node-fetch-commonjs';
 
 const root = path.dirname(path.dirname(__dirname));
 const rootCG = path.join(root, 'extensionsCG');

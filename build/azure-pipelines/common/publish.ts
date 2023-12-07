@@ -6,7 +6,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { Readable } from 'stream';
-import type { ReadableStream } from 'stream/web';
+// import type { ReadableStream } from 'stream/web';
 import { pipeline } from 'node:stream/promises';
 import * as yauzl from 'yauzl';
 import * as crypto from 'crypto';
@@ -18,6 +18,7 @@ import { ClientSecretCredential } from '@azure/identity';
 import * as cp from 'child_process';
 import * as os from 'os';
 import { Worker, isMainThread, workerData } from 'node:worker_threads';
+import fetch, { RequestInit } from 'node-fetch-commonjs';
 
 function e(name: string): string {
 	const result = process.env[name];
@@ -118,7 +119,7 @@ class ProvisionService {
 			throw new Error(`Unexpected status code: ${res.status}`);
 		}
 
-		return await res.json();
+		return await res.json() as any;
 	}
 }
 
@@ -423,7 +424,7 @@ async function requestAZDOAPI<T>(path: string): Promise<T> {
 			throw new Error(`Unexpected status code: ${res.status}`);
 		}
 
-		return await res.json();
+		return await res.json() as any;
 	} finally {
 		clearTimeout(timeout);
 	}
@@ -467,7 +468,7 @@ async function downloadArtifact(artifact: Artifact, downloadPath: string): Promi
 			throw new Error(`Unexpected status code: ${res.status}`);
 		}
 
-		await pipeline(Readable.fromWeb(res.body as ReadableStream), fs.createWriteStream(downloadPath));
+		await pipeline(res.body!, fs.createWriteStream(downloadPath));
 	} finally {
 		clearTimeout(timeout);
 	}

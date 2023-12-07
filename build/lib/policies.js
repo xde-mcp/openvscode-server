@@ -10,6 +10,7 @@ const path = require("path");
 const byline = require("byline");
 const ripgrep_1 = require("@vscode/ripgrep");
 const Parser = require("tree-sitter");
+const node_fetch_commonjs_1 = require("node-fetch-commonjs");
 const { typescript } = require('tree-sitter-typescript');
 const product = require('../../product.json');
 const packageJson = require('../../package.json');
@@ -425,7 +426,7 @@ async function getSpecificNLS(resourceUrlTemplate, languageId, version) {
         path: 'extension/translations/main.i18n.json'
     };
     const url = resourceUrlTemplate.replace(/\{([^}]+)\}/g, (_, key) => resource[key]);
-    const res = await fetch(url);
+    const res = await (0, node_fetch_commonjs_1.default)(url);
     if (res.status !== 200) {
         throw new Error(`[${res.status}] Error downloading language pack ${languageId}@${version}`);
     }
@@ -446,7 +447,7 @@ function compareVersions(a, b) {
     return a[2] - b[2];
 }
 async function queryVersions(serviceUrl, languageId) {
-    const res = await fetch(`${serviceUrl}/extensionquery`, {
+    const res = await (0, node_fetch_commonjs_1.default)(`${serviceUrl}/extensionquery`, {
         method: 'POST',
         headers: {
             'Accept': 'application/json;api-version=3.0-preview.1',
