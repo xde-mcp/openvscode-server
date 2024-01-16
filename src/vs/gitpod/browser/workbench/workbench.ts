@@ -741,7 +741,8 @@ async function doStart(): Promise<IDisposable> {
 				}
 			],
 			public: true,
-			elevation: false
+			elevation: false,
+			protocol: true
 		},
 		tunnelFactory: async (tunnelOptions, tunnelCreationOptions) => {
 			const remotePort = tunnelOptions.remoteAddress.port;
