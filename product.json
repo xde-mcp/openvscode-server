@@ -38,7 +38,7 @@
 	"nodejsRepository": "https://nodejs.org",
 	"urlProtocol": "openvscode-server",
 	"embedderIdentifier": "openvscode-server",
-	"webviewContentExternalBaseUrlTemplate": "https://{{uuid}}.vscode.mads-dev-substrate.gitpod.cloud/insider/ef65ac1ba57f57f2a3961bfe94aa20481caca4c6/out/vs/workbench/contrib/webview/browser/pre/",
+	"webviewContentExternalBaseUrlTemplate": "https://{{uuid}}.vscode.mads-dev-substrate.gitpod.cloud/insider/61be0b00a9ba118ae9c7ce7ead827539296859cd/out/vs/workbench/contrib/webview/browser/pre/",
 	"extensionTips": {
 		"muhammad-sammy.csharp": "{**/*.cs,**/project.json,**/global.json,**/*.csproj,**/*.cshtml,**/*.sln,**/appsettings.json}",
 		"firefox-devtools.vscode-firefox-debug": "{**/*.ts,**/*.tsx,**/*.js,**/*.jsx,**/*.es6,**/.babelrc}",

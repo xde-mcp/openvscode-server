@@ -127,7 +127,7 @@ async function runTestsInBrowser(browserType: BrowserType, endpoint: url.UrlWith
 	const testExtensionUri = url.format({ pathname: URI.file(path.resolve(args.extensionDevelopmentPath)).path, protocol, host, slashes: true });
 	const testFilesUri = url.format({ pathname: URI.file(path.resolve(args.extensionTestsPath)).path, protocol, host, slashes: true });
 
-	const payloadParam = `[["extensionDevelopmentPath","${testExtensionUri}"],["extensionTestsPath","${testFilesUri}"],["enableProposedApi",""],["webviewExternalEndpointCommit","ef65ac1ba57f57f2a3961bfe94aa20481caca4c6"],["skipWelcome","true"]]`;
+	const payloadParam = `[["extensionDevelopmentPath","${testExtensionUri}"],["extensionTestsPath","${testFilesUri}"],["enableProposedApi",""],["webviewExternalEndpointCommit","61be0b00a9ba118ae9c7ce7ead827539296859cd"],["skipWelcome","true"]]`;
 
 	if (path.extname(testWorkspacePath) === '.code-workspace') {
 		await page.goto(`${endpoint.href}&workspace=${testWorkspacePath}&payload=${payloadParam}`);
