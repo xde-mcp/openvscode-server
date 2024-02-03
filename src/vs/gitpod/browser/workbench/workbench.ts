@@ -913,7 +913,8 @@ async function doStart(): Promise<IDisposable> {
 			'workbench.colorTheme': 'Gitpod Light',
 			'workbench.preferredLightColorTheme': 'Gitpod Light',
 			'workbench.preferredDarkColorTheme': 'Gitpod Dark',
-			'window.commandCenter': false
+			'window.commandCenter': false,
+			'workbench.layoutControl.enabled': false
 		},
 		urlCallbackProvider: new LocalStorageURLCallbackProvider('/vscode-extension-auth-callback'),
 		secretStorageProvider,
