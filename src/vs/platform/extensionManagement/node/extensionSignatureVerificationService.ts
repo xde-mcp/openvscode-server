@@ -60,7 +60,7 @@ export class ExtensionSignatureVerificationService implements IExtensionSignatur
 
 	private vsceSign(): Promise<typeof vsceSign> {
 		if (!this.moduleLoadingPromise) {
-			this.moduleLoadingPromise = this.resolveVsceSign();
+			this.moduleLoadingPromise = importAMDNodeModule('@vscode/vsce-sign', 'src/main.js');
 		}
 
 		return this.moduleLoadingPromise;
