@@ -73,7 +73,6 @@ const vscodeWebEntryPoints = [
   buildfile.workerLanguageDetection,
   buildfile.workerLocalFileSearch,
   buildfile.workerProfileAnalysis,
-	buildfile.workerProfileAnalysis,
   buildfile.keyboardMaps,
   buildfile.workbenchWeb,
 ].flat();
