@@ -4,15 +4,18 @@
  *  Copyright (c) Gitpod. All rights reserved.
  *--------------------------------------------------------------------------------------------*/
 
-import { onUnexpectedError } from 'vs/base/common/errors';
-import { ITelemetryAppender, validateTelemetryData } from 'vs/platform/telemetry/common/telemetryUtils';
-import { mapMetrics, mapTelemetryData, ReportErrorParam } from 'vs/gitpod/common/insightsHelper';
+import { onUnexpectedError } from '../../base/common/errors.js';
+import { ITelemetryAppender, validateTelemetryData } from '../../platform/telemetry/common/telemetryUtils.js';
+import { mapMetrics, mapTelemetryData, ReportErrorParam } from '../../gitpod/common/insightsHelper.js';
 import type { IDEMetric } from '@gitpod/ide-metrics-api-grpcweb';
-import type { ErrorEvent } from 'vs/platform/telemetry/common/errorTelemetry';
-import { IGitpodPreviewConfiguration } from 'vs/base/common/product';
-import { filter } from 'vs/base/common/objects';
+import type { ErrorEvent } from '../../platform/telemetry/common/errorTelemetry.js';
+import { IGitpodPreviewConfiguration } from '../../base/common/product.js';
+import { filter } from '../../base/common/objects.js';
 // eslint-disable-next-line local/code-amd-node-module
-import { Analytics, AnalyticsSettings } from '@jeanp413/analytics-node-umd';
+import type { Analytics, AnalyticsSettings } from '@jeanp413/analytics-node-umd';
+import { importAMDNodeModule } from '../../amdX.js';
+
+const segmentResolver = importAMDNodeModule<typeof import('@jeanp413/analytics-node-umd')>('@jeanp413/analytics-node-umd', 'dist/umd/index.js');
 
 interface SupervisorWorkspaceInfo { gitpodHost: string; instanceId: string; workspaceId: string; debugWorkspaceType: 'noDebug' | 'regular' | 'prebuild'; ownerId: string }
 
@@ -44,7 +47,7 @@ export class GitpodInsightsAppender implements ITelemetryAppender {
 
 	private _withAIClient(callback: (aiClient: Analytics) => void): void {
 		if (!this._asyncAIClient) {
-			this._asyncAIClient = this.getWorkspaceInfo().then(({ gitpodHost }) => {
+			this._asyncAIClient = this.getWorkspaceInfo().then(async ({ gitpodHost }) => {
 				const settings: AnalyticsSettings = {
 					writeKey: this.segmentKey,
 					// in dev mode we report directly to IDE playground source
@@ -56,7 +59,7 @@ export class GitpodInsightsAppender implements ITelemetryAppender {
 					settings.host = gitpodHost;
 					settings.path = '/analytics/v1/batch';
 				}
-				return new Analytics(settings);
+				return new (await segmentResolver).Analytics(settings as any);
 			});
 		}
 
@@ -187,9 +190,11 @@ export class GitpodInsightsAppender implements ITelemetryAppender {
 					return undefined;
 				}
 				// load grpc-web before see https://github.com/gitpod-io/gitpod/issues/4448
-				await import('@improbable-eng/grpc-web');
+				await importAMDNodeModule<typeof import('@improbable-eng/grpc-web')>('@improbable-eng/grpc-web', 'dist/grpc-web-client.umd.js');
 				// eslint-disable-next-line local/code-amd-node-module
-				const { MetricsServiceClient, sendMetrics } = await import('@gitpod/ide-metrics-api-grpcweb');
+
+				const MetricsServiceClient = (await importAMDNodeModule<typeof import('@gitpod/ide-metrics-api-grpcweb')>('@gitpod/ide-metrics-api-grpcweb', 'lib/idemetrics_grpc_web_pb.js')).MetricsServiceClient;
+				const sendMetrics = (await importAMDNodeModule<typeof import('@gitpod/ide-metrics-api-grpcweb')>('@gitpod/ide-metrics-api-grpcweb', 'lib/index.js')).sendMetrics;
 
 				const ideMetricsEndpoint = 'https://ide.' + gitpodWsInfo.gitpodHost + '/metrics-api';
 				const client = new MetricsServiceClient(ideMetricsEndpoint);

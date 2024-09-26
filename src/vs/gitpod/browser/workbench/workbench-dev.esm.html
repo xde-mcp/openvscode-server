@@ -1,39 +1,23 @@
-<!-- Copyright (c) Gitpod. All rights reserved.' -->
+<!-- Copyright (C) Microsoft Corporation. All rights reserved. -->
 <!DOCTYPE html>
 <html>
 	<head>
 		<script>
-			let gitpodWorkspaceId = null;
-			let gitpodIdeMetricsUrl = null;
-			(() => {
-				const baseWorkspaceIDRegex = '(([a-f][0-9a-f]{7}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})|([0-9a-z]{2,16}-[0-9a-z]{2,16}-[0-9a-z]{8,11}))';
-				// this pattern matches URL prefixes of workspaces
-				const workspaceUrlPrefixRegex = RegExp(`^([0-9]{4,6}-)?${baseWorkspaceIDRegex}\\.`);
-				const url = new URL(window.location.href);
-				url.search = '';
-				url.hash = '';
-				url.pathname = '';
-				const result = url.host.match(workspaceUrlPrefixRegex);
-				if (result) {
-					gitpodWorkspaceId = result[4]
-					url.host = url.host.split('.').splice(2).join('.');
-				} else {
-					return;
+			function getMetricsUrl() {
+				const gitpodHost = "{{GITPOD_HOST}}";
+				if (!gitpodHost) {
+					return '';
 				}
-				const hostSegments = url.host.split('.');
-				if (hostSegments[0] !== 'ide') {
-					url.host = 'ide.' + url.host;
-				}
-				url.pathname = '/metrics-api';
-				gitpodIdeMetricsUrl = url.toString()
-			})();
-
+				return `https://ide.${gitpodHost}/metrics-api`;
+			}
+			const workspaceId = 'fake-workspace-id'
+			const ideMetricsUrl = getMetricsUrl()
 			async function gitpodMetricsAddCounter(metricsName, labels, value) {
 				try {
-					if (!gitpodIdeMetricsUrl) {
+					if (!ideMetricsUrl) {
 						return false;
 					}
-					const url = `${gitpodIdeMetricsUrl}/metrics/counter/add/${metricsName}`;
+					const url = `${ideMetricsUrl}/metrics/counter/add/${metricsName}`;
 					const params = { value, labels };
 					const response = await fetch(url, {
 						method: 'POST',
@@ -41,7 +25,7 @@
 						credentials: 'omit',
 					});
 					if (!response.ok) {
-						const data = await response.json();
+						const data = await response.json(); // { code: number; message: string; }
 						console.error(`Cannot report metrics with addCounter: ${response.status} ${response.statusText}`, data);
 						return false;
 					}
@@ -54,18 +38,18 @@
 
 			async function gitpodMetricsReportError(error, properties) {
 				try {
-					if (!gitpodIdeMetricsUrl) {
+					if (!ideMetricsUrl) {
 						return false;
 					}
 					const p = Object.assign({}, properties)
 					p.error_name = error.name
 					p.error_message = error.message
-					const url = `${gitpodIdeMetricsUrl}/reportError`;
+					const url = `${ideMetricsUrl}/reportError`;
 					const params = {
 						errorStack: error.stack ?? String(error),
 						component: "vscode-workbench",
 						version: "{{VERSION}}",
-						workspaceId: gitpodWorkspaceId,
+						workspaceId: workspaceId,
 						properties: p,
 					};
 					const response = await fetch(url, {
@@ -113,23 +97,29 @@
 					labels['error'] = 'Unknown';
 				}
 				gitpodMetricsAddCounter('gitpod_supervisor_frontend_error_total', labels);
-
-				// TODO collect errors, we can capture resourceSource, error if possible with stack, message, name, and window URL
 			};
 		</script>
+		<script>
+			globalThis._VSCODE_WEB_PACKAGE_TTP = window.trustedTypes?.createPolicy('amdLoader', {
+				createScriptURL(value) {
+					if (value.startsWith(window.location.origin) || value.startsWith('{{WORKBENCH_WEB_BASE_URL}}')) {
+						return value;
+					}
+					throw new Error(`Invalid script url: ${value}`);
+				}
+			})
+		</script>
+
 		<script>
 			performance.mark('code/didStartRenderer');
 		</script>
 		<meta charset="utf-8" />
 
-		<!-- Gitpod specific -->
-		<meta id="gitpod-ide-capabilities" data-settings="{&quot;service&quot;:true}">
-
 		<!-- Mobile tweaks -->
 		<meta name="mobile-web-app-capable" content="yes" />
 		<meta name="apple-mobile-web-app-capable" content="yes" />
 		<meta name="apple-mobile-web-app-title" content="Code">
-		<link rel="apple-touch-icon" href="{{WORKBENCH_WEB_BASE_URL}}/code-192.png" />
+		<link rel="apple-touch-icon" href="{{WORKBENCH_WEB_BASE_URL}}/resources/server/code-192.png" />
 
 		<!-- Disable pinch zooming -->
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
@@ -140,10 +130,18 @@
 		<!-- Workbench Auth Session -->
 		<meta id="vscode-workbench-auth-session" data-settings="{{WORKBENCH_AUTH_SESSION}}">
 
+		<!-- Builtin Extensions (running out of sources) -->
+		<meta id="vscode-workbench-builtin-extensions" data-settings="{{WORKBENCH_BUILTIN_EXTENSIONS}}">
+
 		<!-- Workbench Icon/Manifest/CSS -->
+		<!-- <link rel="icon" href="{{WORKBENCH_WEB_BASE_URL}}/resources/server/favicon.ico" type="image/x-icon" />
+		<link rel="manifest" href="{{WORKBENCH_WEB_BASE_URL}}/resources/server/manifest.json" crossorigin="use-credentials" /> -->
+		<style id="vscode-css-modules" type="text/css" media="screen"></style>
+
+		<!-- Gitpod Integration -->
 		<link rel="icon" href="/favicon.ico" type="image/x-icon" />
 		<link rel="manifest" href="{{WORKBENCH_WEB_BASE_URL}}/manifest.json" />
-		<link data-name="vs/workbench/workbench.web.main" rel="stylesheet" href="{{WORKBENCH_WEB_BASE_URL}}/out/vs/workbench/workbench.web.main.css" onerror="onVsCodeWorkbenchError(event)">
+
 
 		<style>
 			#gp-code-workbench {
@@ -154,6 +152,7 @@
 				bottom: 0px;
 			}
 		</style>
+
 	</head>
 
 	<body aria-label="">
@@ -162,45 +161,32 @@
 	</body>
 
 	<!-- Startup (do not modify order of script tags!) -->
-	<script type="text/javascript" src="/_supervisor/frontend/main.js" onerror="onVsCodeWorkbenchError(event)" charset="utf-8" crossorigin="anonymous"></script>
-	<script src="{{WORKBENCH_WEB_BASE_URL}}/out/vs/loader.js" onerror="onVsCodeWorkbenchError(event)" crossorigin="anonymous"></script>
-	<script src="{{WORKBENCH_WEB_BASE_URL}}/out/vs/webPackagePaths.js" onerror="onVsCodeWorkbenchError(event)" crossorigin="anonymous"></script>
 	<script>
-		globalThis.env = {
-			GITPOD_CODE_HOST: window.location.host.split('.').splice(2).join('.')
+		const baseUrl = new URL('{{WORKBENCH_WEB_BASE_URL}}', window.location.origin).toString();
+		globalThis._VSCODE_FILE_ROOT = baseUrl + '/out/';
+	</script>
+	<script>
+		const sheet = document.getElementById('vscode-css-modules').sheet;
+		globalThis._VSCODE_CSS_LOAD = function (url) {
+			sheet.insertRule(`@import url(${url});`);
 		};
 
-		const baseUrl = new URL('{{WORKBENCH_WEB_BASE_URL}}', window.location.origin).toString();
-		Object.keys(self.webPackagePaths).map(function (key, index) {
-			self.webPackagePaths[key] = `${baseUrl}/node_modules/${key}/${self.webPackagePaths[key]}`;
-		});
-		require.config({
-			baseUrl: `${baseUrl}/out`,
-			recordStats: true,
-			trustedTypesPolicy: window.trustedTypes?.createPolicy('amdLoader', {
-				createScriptURL(value) {
-					if (value.startsWith(window.location.origin) || value.startsWith('{{WORKBENCH_WEB_BASE_URL}}')) {
-						return value;
-					}
-					throw new Error(`Invalid script url: ${value}`);
-				}
-			}),
-			paths: {
-				...self.webPackagePaths,
-				'@gitpod/local-app-api-grpcweb': `${baseUrl}/node_modules/@gitpod/local-app-api-grpcweb/lib/localapp.js`,
-				'@improbable-eng/grpc-web': `${baseUrl}/node_modules/@improbable-eng/grpc-web/dist/grpc-web-client.umd.js`,
-				'@zip.js/zipjs': `${baseUrl}/node_modules/@zip.js/zip.js/dist/zip-no-worker-deflate.min.js`,
-				'@jeanp413/analytics-node-umd':`${baseUrl}/node_modules/@jeanp413/analytics-node-umd/dist/umd/index.js`
-			}
-		});
+		const importMap = { imports: {} };
+		const cssModules = JSON.parse('{{WORKBENCH_DEV_CSS_MODULES}}');
+		for (const cssModule of cssModules) {
+			const cssUrl = new URL(cssModule, globalThis._VSCODE_FILE_ROOT).href;
+			const jsSrc = `globalThis._VSCODE_CSS_LOAD('${cssUrl}');\n`;
+			const blob = new Blob([jsSrc], { type: 'application/javascript' });
+			importMap.imports[cssUrl] = URL.createObjectURL(blob);
+		}
+		const importMapElement = document.createElement('script');
+		importMapElement.type = 'importmap';
+		importMapElement.setAttribute('nonce', '1nline-m4p')
+		importMapElement.textContent = JSON.stringify(importMap, undefined, 2);
+		document.head.appendChild(importMapElement);
 	</script>
 	<script>
 		performance.mark('code/willLoadWorkbenchMain');
 	</script>
-	<!-- always ensure built in english NLS messages -->
-	<script src="{{WORKBENCH_NLS_FALLBACK_URL}}"></script>
-	<!-- attempt to load NLS messages in case non-english -->
-	<script src="{{WORKBENCH_NLS_URL}}"></script>
-	<script src="{{WORKBENCH_WEB_BASE_URL}}/out/vs/workbench/workbench.web.main.internal.js" onerror="onVsCodeWorkbenchError(event)" crossorigin="anonymous"></script>
-	<script src="{{WORKBENCH_WEB_BASE_URL}}/out/vs/gitpod/browser/workbench/workbench.js" onerror="onVsCodeWorkbenchError(event)" crossorigin="anonymous"></script>
+	<script type="module" src="{{WORKBENCH_WEB_BASE_URL}}/out/vs/gitpod/browser/workbench/workbench.js" onerror="onVsCodeWorkbenchError(event)" crossorigin="anonymous"></script>
 </html>

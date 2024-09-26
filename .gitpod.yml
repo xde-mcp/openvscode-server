@@ -1,25 +1,19 @@
 image:
   file: .gitpod.Dockerfile
 ports:
-  - port: 9888
+  - port: 8080
     onOpen: open-browser
 tasks:
   - init: |
-      yarn
-      yarn server:init
+      npm ci
+      gp sync-done dependencies
+      npm run server:init
     command: |
       gp sync-done init
       export NODE_ENV=development
       export VSCODE_DEV=1
-      yarn gulp watch
+      npm run watch
     name: watch app
-  - command: |
-      export NODE_ENV=development
-      export VSCODE_DEV=1
-      gp sync-await init
-      cd ./extensions
-      yarn watch
-    name: watch extension
   - command: |
       export NODE_ENV=development
       export VSCODE_DEV=1
@@ -27,9 +21,20 @@ tasks:
       ./scripts/code-server.sh --without-connection-token
     name: run app
     openMode: split-right
-github:
-  prebuilds:
-    pullRequestsFromForks: true
+  - name: Local Proxy
+    command: |
+      cd gitpod
+      gp ports await 9888
+      go run proxy.go
+  - name: Build Prepare
+    init: |
+      gp sync-await dependencies
+      npm run gulp compile-build
+      npm run gulp extensions-ci \
+        && npm run gulp minify-vscode-reh \
+        && npm run gulp vscode-web-min-ci \
+        && npm run gulp vscode-reh-linux-x64-min-ci
+
 vscode:
   extensions:
     - dbaeumer.vscode-eslint

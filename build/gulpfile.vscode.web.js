@@ -89,12 +89,17 @@ const vscodeWebResources = [
   // Includes
   ...vscodeWebResourceIncludes,
 
+  // Gitpod Workbench
+  'out-build/vs/gitpod/browser/workbench/*.html',
+
   // Excludes
   '!out-build/vs/**/{node,electron-sandbox,electron-main,electron-utility}/**',
   '!out-build/vs/editor/standalone/**',
   '!out-build/vs/workbench/**/*-tb.png',
   '!out-build/vs/code/**/*-dev.html',
   '!out-build/vs/code/**/*-dev.esm.html',
+  '!out-build/vs/gitpod/**/*-dev.html',
+  '!out-build/vs/gitpod/**/*-dev.esm.html',
   '!**/test/**',
 ];
 
@@ -110,6 +115,8 @@ const vscodeWebEntryPoints = !isAMD() ? [
   buildfile.workerBackgroundTokenization,
   buildfile.keyboardMaps,
   buildfile.workbenchWeb(),
+  // Gitpod Integration
+  buildfile.codeWeb,
   buildfile.entrypoint('vs/workbench/workbench.web.main.internal') // TODO@esm remove line when we stop supporting web-amd-esm-bridge
 ].flat() : [
   buildfile.entrypoint('vs/workbench/workbench.web.main.internal'),

@@ -4,19 +4,26 @@
  *  Copyright (c) Gitpod. All rights reserved.
  *--------------------------------------------------------------------------------------------*/
 
-import { onUnexpectedError } from 'vs/base/common/errors';
-import { ITelemetryAppender, validateTelemetryData } from 'vs/platform/telemetry/common/telemetryUtils';
-import { InfoServiceClient } from '@gitpod/supervisor-api-grpc/lib/info_grpc_pb';
-import { WorkspaceInfoRequest, WorkspaceInfoResponse, DebugWorkspaceType } from '@gitpod/supervisor-api-grpc/lib/info_pb';
+import { onUnexpectedError } from '../../base/common/errors.js';
+import { ITelemetryAppender, validateTelemetryData } from '../../platform/telemetry/common/telemetryUtils.js';
+import { InfoServiceClient } from '@gitpod/supervisor-api-grpc/lib/info_grpc_pb.js';
+import { WorkspaceInfoResponse, default as supervisor } from '@gitpod/supervisor-api-grpc/lib/info_pb.js';
 import * as grpc from '@grpc/grpc-js';
 import * as util from 'util';
-import { filter } from 'vs/base/common/objects';
-import { mapMetrics, mapTelemetryData } from 'vs/gitpod/common/insightsHelper';
-import { MetricsServiceClient, sendMetrics, ReportErrorRequest } from '@gitpod/ide-metrics-api-grpcweb';
-import { IGitpodPreviewConfiguration } from 'vs/base/common/product';
+import { filter } from '../../base/common/objects.js';
+import { mapMetrics, mapTelemetryData } from '../../gitpod/common/insightsHelper.js';
+import { default as idemetrics } from '@gitpod/ide-metrics-api-grpcweb/lib/index.js';
+import { MetricsServiceClient } from '@gitpod/ide-metrics-api-grpcweb/lib/idemetrics_pb_service.js';
+import { IGitpodPreviewConfiguration } from '../../base/common/product.js';
 import { NodeHttpTransport } from '@improbable-eng/grpc-web-node-http-transport';
-import { ErrorEvent } from 'vs/platform/telemetry/common/errorTelemetry';
+import { ErrorEvent } from '../../platform/telemetry/common/errorTelemetry.js';
 import { Analytics, AnalyticsSettings } from '@segment/analytics-node';
+
+const DebugWorkspaceType = supervisor.DebugWorkspaceType;
+const WorkspaceInfoRequest = supervisor.WorkspaceInfoRequest;
+// const MetricsServiceClient = idemetrics.MetricsServiceClient;
+const ReportErrorRequest = idemetrics.ReportErrorRequest;
+const sendMetrics = idemetrics.sendMetrics;
 
 class SupervisorConnection {
 	readonly deadlines = {
