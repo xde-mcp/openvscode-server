@@ -118,6 +118,10 @@
 			};
 		</script>
 		<script>
+			globalThis.env = {
+				GITPOD_CODE_HOST: window.location.host.split('.').splice(2).join('.')
+			};
+
 			globalThis._VSCODE_WEB_PACKAGE_TTP = window.trustedTypes?.createPolicy('amdLoader', {
 				createScriptURL(value) {
 					if (value.startsWith(window.location.origin) || value.startsWith('{{WORKBENCH_WEB_BASE_URL}}')) {
