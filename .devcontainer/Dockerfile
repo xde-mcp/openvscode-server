@@ -2,8 +2,6 @@ FROM mcr.microsoft.com/devcontainers/base:ubuntu-24.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-USER root
-
 # Latest stable git
 RUN apt-get update && apt-get install -y software-properties-common
 RUN add-apt-repository ppa:git-core/ppa -y
