@@ -7,13 +7,5 @@
 		"ghcr.io/devcontainers/features/docker-in-docker:2": {}
 	},
 	"remoteUser": "root",
-	"overrideCommand": false,
-	"privileged": true,
-	"mounts": [
-		{
-			"source": "vscode-dev",
-			"target": "/vscode-dev",
-			"type": "volume"
-		}
-	]
+	"privileged": true
 }
