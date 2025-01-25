@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/devcontainers/base:ubuntu-24.04
+FROM buildpack-deps:24.04-curl
 
 ARG DEBIAN_FRONTEND=noninteractive
 
