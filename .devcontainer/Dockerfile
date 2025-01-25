@@ -17,7 +17,6 @@ RUN apt-get update && apt-get install -y \
     gnome-keyring \
     iproute2 \
     libfuse2 \
-    libgconf-2-4 \
     libgdk-pixbuf2.0-0 \
     libgl1 \
     libgtk-3.0 \
