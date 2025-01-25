@@ -6,6 +6,7 @@
 	"features": {
 		"ghcr.io/devcontainers/features/docker-in-docker:2": {}
 	},
+	"remoteUser": "root",
 	"overrideCommand": false,
 	"privileged": true,
 	"mounts": [
