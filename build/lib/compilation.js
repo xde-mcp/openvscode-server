@@ -101,9 +101,6 @@ function createCompile(src, { build, emitError, transpileOnly, preserveEnglish }
         const isCSS = (f) => f.path.endsWith('.css') && !f.path.includes('fixtures');
         const noDeclarationsFilter = util.filter(data => !(/\.d\.ts$/.test(data.path)));
         const postcssNesting = require('postcss-nesting');
-<<<<<<< HEAD
-        const input = event_stream_1.default.through();
-=======
         const productJsFilter = util.filter(data => !build && data.path.endsWith('vs/platform/product/common/product.ts'));
         const productConfiguration = JSON.stringify({
             ...productJson,
@@ -112,8 +109,7 @@ function createCompile(src, { build, emitError, transpileOnly, preserveEnglish }
             nameLong: `${productJson.nameLong} Dev`,
             dataFolderName: `${productJson.dataFolderName}-dev`
         });
-        const input = es.through();
->>>>>>> b86fc8c2f35 (code web server initial commit)
+        const input = event_stream_1.default.through();
         const output = input
             .pipe(productJsFilter)
             .pipe(replace(/{\s*\/\*BUILD->INSERT_PRODUCT_CONFIGURATION\*\/\s*}/, productConfiguration, { skipBinary: true }))
