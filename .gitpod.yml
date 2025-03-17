@@ -29,7 +29,7 @@ tasks:
   - name: Build Prepare
     init: |
       gp sync-await dependencies
-      npm run gulp compile-build
+      npm run gulp compile-build-pr
       npm run gulp extensions-ci \
         && npm run gulp minify-vscode-reh \
         && npm run gulp vscode-web-min-ci \
