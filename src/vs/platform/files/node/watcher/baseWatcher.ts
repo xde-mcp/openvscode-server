@@ -36,6 +36,8 @@ export abstract class BaseWatcher extends Disposable implements IWatcher {
 	private readonly suspendedWatchRequests = this._register(new DisposableMap<number /* request ID */>());
 	private readonly suspendedWatchRequestsWithPolling = new Set<number /* request ID */>();
 
+	private readonly watchRequestIDCache = new WeakMap<IUniversalWatchRequest, number>();
+
 	private readonly updateWatchersDelayer = this._register(new ThrottledDelayer<void>(this.getUpdateWatchersDelay()));
 
 	protected readonly suspendedWatchRequestPollingInterval: number = 5007; // node.js default
@@ -57,14 +59,20 @@ export abstract class BaseWatcher extends Disposable implements IWatcher {
 	}
 
 	private computeId(request: IUniversalWatchRequest): number {
+		let id = this.watchRequestIDCache.get(request);
+		if (id !== undefined) {
+			return id;
+		}
 		if (this.isCorrelated(request)) {
-			return request.correlationId;
+			id = request.correlationId;
 		} else {
 			// Requests without correlation do not carry any unique identifier, so we have to
 			// come up with one based on the options of the request. This matches what the
 			// file service does (vs/platform/files/common/fileService.ts#L1178).
-			return hash(request);
+			id = hash(request);
 		}
+		this.watchRequestIDCache.set(request, id);
+		return id;
 	}
 
 	async watch(requests: IUniversalWatchRequest[]): Promise<void> {
