@@ -1303,6 +1303,7 @@ export class ThrottledWorker<T> extends Disposable {
 	override dispose(): void {
 		super.dispose();
 
+		this.pendingWork.length = 0;
 		this.disposed = true;
 	}
 }
