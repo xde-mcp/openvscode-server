@@ -10,8 +10,4 @@ COMMIT="@@COMMIT@@"
 EXEC_NAME="@@APPNAME@@"
 CLI_SCRIPT="$ROOT/out/server-cli.js"
 
-if [ -z "$GP_VSCODE_NODE" ]; then
-	GP_VSCODE_NODE="$ROOT/node"
-fi
-
-"$GP_VSCODE_NODE" "$CLI_SCRIPT" "$APP_NAME" "$VERSION" "$COMMIT" "$EXEC_NAME" "$@"
+"$ROOT/node" "$CLI_SCRIPT" "$APP_NAME" "$VERSION" "$COMMIT" "$EXEC_NAME" "$@"
